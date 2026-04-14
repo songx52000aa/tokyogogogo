@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ 東京六天五夜大冒險 ✨</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: #fffaf0;
+            background-image: radial-gradient(#fde047 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: #e0f2fe;
+            border-radius: 2rem;
+            border: 4px dashed #fbcfe8;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .landmass {
+            position: absolute;
+            background: #dcfce7;
+            border-radius: 50%;
+            filter: blur(4px);
+        }
+
+        .map-pin {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: translate(-50%, -50%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .map-pin:hover {
+            transform: translate(-50%, -60%) scale(1.1);
+            z-index: 20;
+        }
+
+        .pin-emoji {
+            font-size: 2.5rem;
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
+        }
+
+        .pin-label {
+            background: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #4b5563;
+            border: 2px solid #f9a8d4;
+            margin-top: -5px;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .route-line {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        .timeline-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #f472b6;
+            border: 4px solid #fbcfe8;
+            position: absolute;
+            left: -8px;
+            top: 24px;
+        }
+
+        .tab-btn {
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background-color: #f472b6;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(244, 114, 182, 0.5);
+        }
+
+        .route-path {
+            opacity: 0.25;
+            transition: all 0.4s ease;
+            stroke-dasharray: 6 6;
+        }
+        
+        .route-path.active {
+            opacity: 1;
+            stroke-width: 4px;
+            stroke-dasharray: 8 8;
+            animation: dashAnim 1.5s linear infinite;
+            filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));
+        }
+
+        @keyframes dashAnim {
+            to { stroke-dashoffset: -16; }
+        }
+
+        /* 推薦清單卡片樣式 */
+        .reco-box {
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 2px dashed;
+            border-radius: 1rem;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+        }
+        .reco-title {
+            font-weight: 900;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        @media (max-width: 640px) {
+            .map-container { height: 300px; }
+            .pin-emoji { font-size: 2rem; }
+            .pin-label { font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body class="text-gray-700 min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="text-center py-10 px-4">
+        <h1 class="text-4xl md:text-5xl font-black text-pink-500 mb-3 drop-shadow-sm">✨ 東京大冒險企劃 ✨</h1>
+        <p class="text-lg text-gray-500 font-bold bg-white inline-block px-4 py-1 rounded-full border-2 border-yellow-300">6/4 ✈️ 6/9 樂園 × 聖山 × 摩登都會</p>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4">
+        
+        <!-- Q-Version Map Section -->
+        <section class="mb-12 relative bg-white p-4 rounded-[2.5rem] shadow-xl border-4 border-white">
+            <h2 class="text-2xl font-bold text-center text-blue-400 mb-4 flex items-center justify-center gap-2">
+                🗺️ Q版路線總覽地圖
+            </h2>
+            
+            <div class="map-container relative">
+                <!-- Abstract Landmasses -->
+                <div class="landmass w-[80%] h-[120%] -left-[10%] -top-[10%]"></div>
+                <div class="landmass w-[40%] h-[60%] right-[0%] top-[20%] bg-green-100"></div>
+
+                <!-- SVG Routes -->
+                <svg class="route-line" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <path id="path-day-1" d="M 85 90 Q 75 75 65 75 L 55 60 L 70 30 L 75 25" fill="none" stroke="#ec4899" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
+                    <path id="path-day-2" d="M 65 75 Q 75 70 88 65 Q 75 75 65 75" fill="none" stroke="#3b82f6" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
+                    <path id="path-day-3" d="M 65 75 L 75 25 L 45 60 L 48 55 L 65 65" fill="none" stroke="#10b981" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
+                    <path id="path-day-4" d="M 65 75 L 65 65 L 35 45 L 15 50" fill="none" stroke="#8b5cf6" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
+                    <path id="path-day-5" d="M 15 50 Q 30 50 45 55 L 65 75" fill="none" stroke="#ef4444" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
+                    <path id="path-day-6" d="M 65 75 L 45 50 L 70 30 L 85 90" fill="none" stroke="#f59e0b" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
+                </svg>
+
+                <!-- Pins -->
+                <div class="map-pin" style="left: 15%; top: 50%;">
+                    <div class="pin-emoji">🗻</div>
+                    <div class="pin-label">富士山</div>
+                </div>
+                <div class="map-pin" style="left: 35%; top: 45%;">
+                    <div class="pin-emoji">🌳</div>
+                    <div class="pin-label">吉卜力</div>
+                </div>
+                <div class="map-pin" style="left: 45%; top: 50%;">
+                    <div class="pin-emoji">🛍️</div>
+                    <div class="pin-label">原宿/澀谷</div>
+                </div>
+                <div class="map-pin" style="left: 45%; top: 60%;">
+                    <div class="pin-emoji">☕</div>
+                    <div class="pin-label">代官山/中目黑</div>
+                </div>
+                <div class="map-pin" style="left: 55%; top: 60%;">
+                    <div class="pin-emoji">🗼</div>
+                    <div class="pin-label">東京鐵塔</div>
+                </div>
+                <div class="map-pin" style="left: 65%; top: 65%;">
+                    <div class="pin-emoji">🍸</div>
+                    <div class="pin-label">銀座/築地</div>
+                </div>
+                <div class="map-pin" style="left: 65%; top: 75%;">
+                    <div class="pin-emoji">🏨</div>
+                    <div class="pin-label">有明大酒店</div>
+                </div>
+                <div class="map-pin" style="left: 70%; top: 30%;">
+                    <div class="pin-emoji">🐼</div>
+                    <div class="pin-label">上野/秋葉原</div>
+                </div>
+                <div class="map-pin" style="left: 75%; top: 25%;">
+                    <div class="pin-emoji">🏮</div>
+                    <div class="pin-label">淺草/晴空塔</div>
+                </div>
+                <div class="map-pin" style="left: 88%; top: 65%;">
+                    <div class="pin-emoji">🏰</div>
+                    <div class="pin-label">迪士尼</div>
+                </div>
+                <div class="map-pin" style="left: 85%; top: 90%;">
+                    <div class="pin-emoji">✈️</div>
+                    <div class="pin-label">成田機場</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tokyo Subway Map Section -->
+        <section class="mb-12 bg-white p-6 rounded-[2.5rem] shadow-xl border-4 border-white">
+            <h2 class="text-2xl font-bold text-center text-blue-500 mb-4 flex items-center justify-center gap-2">
+                🚇 東京地鐵路線總覽
+            </h2>
+            <div class="relative w-full rounded-2xl border-2 border-blue-100 bg-blue-50 p-6 flex flex-col items-center">
+                <p class="text-sm text-gray-600 mb-4 text-center font-bold">為了確保最佳畫質與最新資訊，請點擊下方按鈕直接開啟官方繁體中文地鐵圖！</p>
+                <div class="flex gap-3 w-full justify-center">
+                    <a href="https://www.tokyometro.jp/station/pdf/202305/202305_number_tcn.pdf" target="_blank" class="inline-flex items-center justify-center gap-2 bg-blue-500 text-white font-bold px-8 py-3 rounded-full hover:bg-blue-600 transition-all shadow-md hover:shadow-lg no-underline text-base w-full md:w-auto transform hover:-translate-y-1">
+                        📥 開啟官方高清地鐵圖 PDF (繁體中文)
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Itinerary Section -->
+        <section class="bg-white rounded-[2.5rem] p-6 md:p-8 shadow-xl border-4 border-white relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-4 bg-gradient-to-r from-pink-300 via-yellow-300 to-blue-300"></div>
+            
+            <h2 class="text-2xl font-bold text-center text-purple-500 mb-6 flex items-center justify-center gap-2">
+                ⏱️ 每日行程與吃喝玩樂大補帖
+            </h2>
+
+            <!-- Tabs -->
+            <div class="flex flex-wrap justify-center gap-2 mb-8">
+                <button onclick="showDay(1)" id="btn-day-1" class="tab-btn active px-4 py-2 rounded-full font-bold bg-pink-400 text-white hover:bg-pink-500">6/4 (Day 1)</button>
+                <button onclick="showDay(2)" id="btn-day-2" class="tab-btn px-4 py-2 rounded-full font-bold bg-gray-100 text-gray-500 hover:bg-gray-200">6/5 (Day 2)</button>
+                <button onclick="showDay(3)" id="btn-day-3" class="tab-btn px-4 py-2 rounded-full font-bold bg-gray-100 text-gray-500 hover:bg-gray-200">6/6 (Day 3)</button>
+                <button onclick="showDay(4)" id="btn-day-4" class="tab-btn px-4 py-2 rounded-full font-bold bg-gray-100 text-gray-500 hover:bg-gray-200">6/7 (Day 4)</button>
+                <button onclick="showDay(5)" id="btn-day-5" class="tab-btn px-4 py-2 rounded-full font-bold bg-gray-100 text-gray-500 hover:bg-gray-200">6/8 (Day 5)</button>
+                <button onclick="showDay(6)" id="btn-day-6" class="tab-btn px-4 py-2 rounded-full font-bold bg-gray-100 text-gray-500 hover:bg-gray-200">6/9 (Day 6)</button>
+            </div>
+
+            <!-- Content Container -->
+            <div class="relative border-l-4 border-pink-100 ml-4 md:ml-8 pl-6 md:pl-10">
+                
+                <!-- Day 1 -->
+                <div id="day-1" class="day-content animate-fade-in">
+                    <h3 class="text-xl font-bold text-pink-500 mb-4 bg-pink-50 inline-block px-3 py-1 rounded-lg">6/4 (二) 第一天：降落與經典地標 🧳</h3>
+                    
+                    <div class="relative mb-6">
+                        <div class="timeline-dot"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">11:15 - 14:30</div>
+                        <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-none border border-gray-100 shadow-sm">
+                            <h4 class="font-bold text-lg text-gray-700 flex items-center gap-2">✈️ 桃機 ➔ 成田 ➔ 飯店 Check-in</h4>
+                            <p class="text-gray-500 mt-2">11:15 抵達成田機場。搭車前往本次大本營【維拉芳泉東京有明大酒店】放行李。</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&origin=成田國際機場&destination=維拉芳泉東京有明大酒店&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-blue-200 text-blue-600 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-blue-50 transition-colors mt-3 shadow-sm no-underline">🚇 導航：成田機場 ➔ 有明大酒店</a>
+                        </div>
+                    </div>
+
+                    <div class="relative mb-6">
+                        <div class="timeline-dot"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">15:30 - 18:00</div>
+                        <div class="bg-red-50 p-4 rounded-2xl rounded-tl-none border border-red-100 shadow-sm">
+                            <h4 class="font-bold text-lg text-red-700 flex items-center gap-2">🗼 東京鐵塔 ＆ 秋葉原</h4>
+                            <p class="text-gray-500 mt-2">打卡經典地標東京鐵塔，隨後直奔動漫聖地秋葉原買公仔！</p>
+                            <div class="flex flex-wrap gap-2 mt-3">
+                                <a href="https://www.google.com/maps/dir/?api=1&origin=維拉芳泉東京有明大酒店&destination=東京鐵塔&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-blue-200 text-blue-600 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-blue-50 transition-colors shadow-sm no-underline">🚇 導航：飯店 ➔ 東京鐵塔</a>
+                                <a href="https://www.google.com/maps/dir/?api=1&origin=東京鐵塔&destination=秋葉原&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-blue-200 text-blue-600 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-blue-50 transition-colors shadow-sm no-underline">🚇 導航：東京鐵塔 ➔ 秋葉原</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative mb-6">
+                        <div class="timeline-dot"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">18:30 - 21:30</div>
+                        <div class="bg-blue-50 p-4 rounded-2xl rounded-tl-none border border-blue-100 shadow-sm">
+                            <h4 class="font-bold text-lg text-blue-700 flex items-center gap-2">🌌 晴空塔看夜景</h4>
+                            <p class="text-gray-500 mt-2">前往晴空塔享受東京百萬夜景，並在商場內享用超讚晚餐。</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&origin=秋葉原&destination=東京晴空塔&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-blue-200 text-blue-600 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-blue-50 transition-colors mt-3 mb-2 shadow-sm no-underline">🚇 導航：秋葉原 ➔ 晴空塔</a>
+                            <div class="reco-box border-blue-300">
+                                <div class="text-blue-600 mb-2"><span class="reco-title">🎫 門票筆記</span> 記得先在 Klook 買好晴空塔門票！</div>
+                                <div class="text-blue-600"><span class="reco-title">🍴 晚餐名單 (4選1)</span> 
+                                    <ul class="list-disc ml-5 text-sm">
+                                        <li><b>利久牛舌：</b> 炭火厚切超脆彈</li>
+                                        <li><b>TORITON 迴轉壽司：</b> 來自北海道的高CP值排隊名店</li>
+                                        <li><b>月島名物文字燒 だるま：</b> 體驗自己鏟文字燒的樂趣</li>
+                                        <li><b>六厘舍沾麵：</b> 濃郁海鮮豚骨湯頭</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day 2 -->
+                <div id="day-2" class="day-content hidden animate-fade-in">
+                    <h3 class="text-xl font-bold text-blue-500 mb-4 bg-blue-50 inline-block px-3 py-1 rounded-lg">6/5 (三) 第二天：特早起的魔法一日 🏰</h3>
+                    
+                    <div class="relative mb-6">
+                        <div class="timeline-dot" style="background-color: #60a5fa; border-color: #bfdbfe;"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">07:00 - 21:00</div>
+                        <div class="bg-blue-50 p-4 rounded-2xl rounded-tl-none border border-blue-100 shadow-sm">
+                            <h4 class="font-bold text-lg text-blue-700 flex items-center gap-2">🎢 迪士尼特早起出發！</h4>
+                            <p class="text-gray-500 mt-2">玩玩玩、晴天晴天！從有明飯店出發非常近，一整天徹底沉浸在樂園裡。</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&origin=維拉芳泉東京有明大酒店&destination=東京迪士尼樂園&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-blue-200 text-blue-600 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-blue-50 transition-colors mt-3 mb-2 shadow-sm no-underline">🚇 導航：飯店 ➔ 迪士尼</a>
+                            
+                            <!-- 迪士尼終極攻略區塊 -->
+                            <div class="reco-box border-blue-400 bg-white shadow-sm mt-3">
+                                <h5 class="font-black text-blue-800 border-b-2 border-blue-100 pb-2 mb-3 flex items-center gap-2">
+                                    📖 迪士尼終極攻略 ＆ 必備注意事項
+                                </h5>
+                                <ul class="list-disc ml-5 text-sm text-gray-600 space-y-2.5 leading-relaxed">
+                                    <li><b class="text-blue-600">下載 App 並綁定：</b> 出發前務必在台灣先下載好「Tokyo Disney Resort」官方 App，並將同行者的門票互相掃描綁定在同一個群組，方便一起抽票。</li>
+                                    <li><b class="text-blue-600">黃金入園時間：</b> 表定 9:00 開園，但通常會提早（約 8:15 - 8:30）。強烈建議 <span class="text-red-500 font-bold">07:00 到達安檢口</span> 排隊，爭取第一批入園！</li>
+                                    <li><b class="text-blue-600">入園第一件事 (搶票)：</b> 刷門票過閘門的那一刻，全家人立刻分工合作打開 App 操作：
+                                        <ul class="list-circle ml-4 mt-1 text-gray-500">
+                                            <li>買 <b class="text-orange-500">DPA (迪士尼尊享卡/付費快速通關)</b>：熱門如《美女與野獸》必買！</li>
+                                            <li>抽 <b class="text-green-600">Priority Pass (預約等候卡/免費快速通關)</b>。</li>
+                                            <li>抽 <b class="text-purple-500">Entry Request (報名體驗/看秀)</b>。</li>
+                                        </ul>
+                                    </li>
+                                    <li><b class="text-blue-600">行動點餐 (Mobile Order)：</b> 園區內餐廳排隊極長，入園後立刻用 App 預訂午餐/晚餐的取餐時段，時間到直接去拿餐，省下大量排隊時間。</li>
+                                    <li><b class="text-blue-600">硬體準備：</b> 由於整天都需要開 App 抽票、看地圖、點餐，手機耗電極快，<span class="font-bold text-red-500">請務必帶至少兩顆充飽電的行動電源！</span> 東京灣海風大，日夜溫差明顯，記得帶防曬及薄外套。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day 3 -->
+                <div id="day-3" class="day-content hidden animate-fade-in">
+                    <h3 class="text-xl font-bold text-green-500 mb-4 bg-green-50 inline-block px-3 py-1 rounded-lg">6/6 (四) 第三天：寧靜巡禮與質感生活 👘</h3>
+                    
+                    <div class="relative mb-6">
+                        <div class="timeline-dot" style="background-color: #34d399; border-color: #a7f3d0;"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">09:00 - 14:00</div>
+                        <div class="bg-green-50 p-4 rounded-2xl rounded-tl-none border border-green-100 shadow-sm">
+                            <h4 class="font-bold text-lg text-green-700 flex items-center gap-2">🏮 淺草寺周邊與和服體驗</h4>
+                            <p class="text-gray-500 mt-2">換上和服漫步下町，參拜淺草寺與招財貓發源地【今戶神社】。</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&origin=維拉芳泉東京有明大酒店&destination=淺草寺&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-green-200 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-green-50 transition-colors mt-3 mb-2 shadow-sm no-underline">🚇 導航：飯店 ➔ 淺草</a>
+                            <div class="reco-box border-green-300">
+                                <div class="text-green-700 mb-2"><span class="reco-title">📍 行程筆記</span> 
+                                    <ul class="list-disc ml-5 text-sm">
+                                        <li>和服店已挑選 Klook/靜和服/Miyabi，可選「一般正式」或「浪漫蕾絲」款！</li>
+                                        <li>記得逛逛【前川印傳】精緻的傳統印花皮革工藝品。</li>
+                                        <li>肚子餓了就去吃【商店街美食】。</li>
+                                    </ul>
+                                </div>
+                                <div class="text-green-700"><span class="reco-title">🍴 頂級午餐</span> <b>敘敘苑燒肉</b> (換下和服後去吃最舒服！)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative mb-6">
+                        <div class="timeline-dot" style="background-color: #34d399; border-color: #a7f3d0;"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">14:30 - 18:00</div>
+                        <div class="bg-emerald-50 p-4 rounded-2xl rounded-tl-none border border-emerald-100 shadow-sm">
+                            <h4 class="font-bold text-lg text-emerald-700 flex items-center gap-2">☕ 代官山 ➔ 中目黑</h4>
+                            <p class="text-gray-500 mt-2">感受東京最高級的質感生活圈與綠意。</p>
+                            <div class="flex flex-wrap gap-2 mt-3 mb-2">
+                                <a href="https://www.google.com/maps/dir/?api=1&origin=淺草&destination=代官山&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-green-200 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-green-50 transition-colors shadow-sm no-underline">🚇 導航：淺草 ➔ 代官山</a>
+                                <a href="https://www.google.com/maps/dir/?api=1&origin=代官山&destination=中目黑&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-green-200 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-green-50 transition-colors shadow-sm no-underline">🚇 導航：代官山 ➔ 中目黑</a>
+                            </div>
+                            <div class="reco-box border-emerald-300">
+                                <div class="text-emerald-700 mb-2"><span class="reco-title">📍 代官山</span> Log Road (鐵道舊址活化綠地)、T-Site (全球最美蔦屋書店)。</div>
+                                <div class="text-emerald-700 mb-2"><span class="reco-title">📍 中目黑</span> 星巴克臻選®東京烘焙工坊、沿著目黑川走走散散步。</div>
+                                <div class="text-emerald-700"><span class="reco-title">🍴 必吃晚餐</span> <b>Tonkatsu Maisen (邁泉炸豬排)</b></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative mb-6">
+                        <div class="timeline-dot" style="background-color: #34d399; border-color: #a7f3d0;"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">18:30 - 22:00</div>
+                        <div class="bg-gray-800 p-4 rounded-2xl rounded-tl-none border border-gray-700 shadow-sm">
+                            <h4 class="font-bold text-lg text-white flex items-center gap-2">🍸 澀谷夜景 ➔ 銀座微醺</h4>
+                            <p class="text-gray-300 mt-2">前往澀谷【SHIBUYA SKY】看夜景，隨後前往銀座的知名酒吧【Mori Bar】享受由傳奇調酒師帶來的經典調酒，為寧靜的一天完美收尾。</p>
+                            <div class="flex flex-wrap gap-2 mt-3">
+                                <a href="https://www.google.com/maps/dir/?api=1&origin=中目黑&destination=SHIBUYA+SKY&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-gray-500 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-gray-200 transition-colors shadow-sm no-underline">🚇 導航：中目黑 ➔ 澀谷</a>
+                                <a href="https://www.google.com/maps/dir/?api=1&origin=SHIBUYA+SKY&destination=Mori+Bar+銀座&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-gray-500 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-gray-200 transition-colors shadow-sm no-underline">🚇 導航：澀谷 ➔ Mori Bar 銀座</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day 4 -->
+                <div id="day-4" class="day-content hidden animate-fade-in">
+                    <h3 class="text-xl font-bold text-purple-500 mb-4 bg-purple-50 inline-block px-3 py-1 rounded-lg">6/7 (五) 第四天：築地銀座與童話森林 (開始自駕🚗) 🌳</h3>
+                    
+                    <div class="relative mb-6">
+                        <div class="timeline-dot" style="background-color: #a78bfa; border-color: #ddd6fe;"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">09:00 - 12:30</div>
+                        <div class="bg-orange-50 p-4 rounded-2xl rounded-tl-none border border-orange-100 shadow-sm">
+                            <h4 class="font-bold text-lg text-orange-700 flex items-center gap-2">🍣 築地市場 ＆ 銀座周遭</h4>
+                            <p class="text-gray-500 mt-2">早起到築地市場大吃新鮮海鮮與玉子燒，吃飽後漫步到銀座商圈逛街消化一下。</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&origin=維拉芳泉東京有明大酒店&destination=築地市場&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-orange-200 text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-orange-50 transition-colors mt-3 shadow-sm no-underline">🚇 導航：飯店 ➔ 築地市場</a>
+                        </div>
+                    </div>
+
+                    <div class="relative mb-6">
+                        <div class="timeline-dot" style="background-color: #a78bfa; border-color: #ddd6fe;"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">12:30 - 13:30</div>
+                        <div class="bg-yellow-50 p-4 rounded-2xl rounded-tl-none border border-yellow-100 shadow-sm">
+                            <h4 class="font-bold text-lg text-yellow-700 flex items-center gap-2">🚗 銀座租車取車</h4>
+                            <p class="text-gray-500 mt-2">在銀座周邊的租車公司完成手續，準備開啟自駕之旅！</p>
+                        </div>
+                    </div>
+
+                    <div class="relative mb-6">
+                        <div class="timeline-dot" style="background-color: #a78bfa; border-color: #ddd6fe;"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">14:00 - 16:30</div>
+                        <div class="bg-green-50 p-4 rounded-2xl rounded-tl-none border border-green-100 shadow-sm">
+                            <h4 class="font-bold text-lg text-green-700 flex items-center gap-2">🤖 開車前往 ➔ 吉卜力三鷹美術館</h4>
+                            <p class="text-gray-500 mt-2">開車前往三鷹，走進宮崎駿的夢幻動畫世界。</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&origin=銀座&destination=三鷹之森吉卜力美術館&travelmode=driving" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-green-300 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-green-100 transition-colors mt-3 mb-2 shadow-sm no-underline">🚗 導航：銀座 ➔ 吉卜力 (自駕)</a>
+                            <div class="reco-box border-green-400 bg-green-100">
+                                <div class="text-green-800 font-bold"><span class="reco-title">⚠️ 搶票警報 ⚠️</span> 務必在 5/10 準時上網搶票！(Lawson Ticket)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative mb-6">
+                        <div class="timeline-dot" style="background-color: #a78bfa; border-color: #ddd6fe;"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">17:00 - 19:30</div>
+                        <div class="bg-indigo-50 p-4 rounded-2xl rounded-tl-none border border-indigo-100 shadow-sm">
+                            <h4 class="font-bold text-lg text-indigo-700 flex items-center gap-2">🎒 開車前往 ➔ 富士山</h4>
+                            <p class="text-gray-500 mt-2">傍晚直接開車上高速公路前往富士山河口湖區域入住，免去轉車搬行李的辛勞！</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&origin=三鷹之森吉卜力美術館&destination=河口湖&travelmode=driving" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-indigo-200 text-indigo-600 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-indigo-50 transition-colors mt-3 shadow-sm no-underline">🚗 導航：吉卜力 ➔ 富士山河口湖 (自駕)</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day 5 -->
+                <div id="day-5" class="day-content hidden animate-fade-in">
+                    <h3 class="text-xl font-bold text-red-500 mb-4 bg-red-50 inline-block px-3 py-1 rounded-lg">6/8 (六) 第五天：富士自駕巡禮與爵士夜 🗻</h3>
+                    
+                    <div class="relative mb-6">
+                        <div class="timeline-dot" style="background-color: #f87171; border-color: #fecaca;"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">06:00 - 16:30</div>
+                        <div class="bg-cyan-50 p-4 rounded-2xl rounded-tl-none border border-cyan-100 shadow-sm">
+                            <h4 class="font-bold text-lg text-cyan-700 flex items-center gap-2">📸 富士山熱門打卡點自駕巡禮</h4>
+                            <p class="text-gray-500 mt-2">開車機動性極高！早起先衝淺間公園拍五重塔，隨後開車環湖打卡各景點。</p>
+                            <div class="flex flex-wrap gap-2 mt-3 mb-2">
+                                <a href="https://www.google.com/maps/dir/?api=1&origin=河口湖&destination=新倉山淺間公園&travelmode=driving" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-cyan-200 text-cyan-700 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-cyan-50 transition-colors shadow-sm no-underline">🚗 導航：前往 淺間公園</a>
+                                <a href="https://www.google.com/maps/dir/?api=1&origin=新倉山淺間公園&destination=日川時計店&travelmode=driving" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-cyan-200 text-cyan-700 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-cyan-50 transition-colors shadow-sm no-underline">🚗 導航：前往 日川時計店</a>
+                            </div>
+                            <div class="reco-box border-cyan-300">
+                                <div class="text-cyan-700 mb-2"><span class="reco-title">📍 必去景點</span> 
+                                    <ul class="list-disc ml-5 text-sm">
+                                        <li><b>新倉山淺間公園：</b> 最經典的五重塔與富士山。</li>
+                                        <li><b>日川時計店：</b> 復古街道盡頭連著巨大富士山。</li>
+                                        <li><b>羅森 (LAWSON) 河口湖站前店：</b> 超商屋頂上的富士山。</li>
+                                        <li><b>忍野八海 - 湧池：</b> 欣賞清澈見底的富士雪水湧泉。</li>
+                                        <li><b>大石公園：</b> 欣賞河口湖與富士山同框的壯闊。</li>
+                                        <li><b>富士山遙拜所 (天空鳥居)：</b> (視體力決定要不要爬山去拍！)。</li>
+                                    </ul>
+                                </div>
+                                <div class="text-cyan-700"><span class="reco-title">🍴 必吃美食</span> 
+                                    <ul class="list-disc ml-5 text-sm">
+                                        <li><b>日本鰻 世櫻：</b> 絕讚鰻魚飯。</li>
+                                        <li><b>Fujisan Shokupan：</b> 買個超可愛的「富士山吐司」和「富士山布丁」！</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative mb-6">
+                        <div class="timeline-dot" style="background-color: #f87171; border-color: #fecaca;"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">17:00 - 19:30</div>
+                        <div class="bg-gray-100 p-4 rounded-2xl rounded-tl-none border border-gray-200 shadow-sm">
+                            <h4 class="font-bold text-lg text-gray-700 flex items-center gap-2">🚗 返回東京 ➔ 市區還車</h4>
+                            <p class="text-gray-500 mt-2">開車返回東京市區，將車輛歸還至指定的租車營業所。</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&origin=河口湖&destination=東京市區&travelmode=driving" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-gray-300 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-gray-100 transition-colors mt-3 shadow-sm no-underline">🚗 導航：富士山 ➔ 東京市區 (自駕回程)</a>
+                        </div>
+                    </div>
+
+                    <div class="relative mb-6">
+                        <div class="timeline-dot" style="background-color: #f87171; border-color: #fecaca;"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">20:00 - 22:30</div>
+                        <div class="bg-blue-900 p-4 rounded-2xl rounded-tl-none border border-blue-800 shadow-sm">
+                            <h4 class="font-bold text-lg text-blue-100 flex items-center gap-2">🎷 殿堂級音樂饗宴 Blue Note Tokyo</h4>
+                            <p class="text-blue-200 mt-2">還車後，前往位在南青山的殿堂級爵士樂聖地「Blue Note」，沉浸在音樂與美食中。</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=Blue+Note+Tokyo&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-blue-800 border-2 border-blue-600 text-blue-100 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-blue-700 transition-colors mt-3 shadow-sm no-underline">🚇 導航：前往 Blue Note Tokyo</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day 6 -->
+                <div id="day-6" class="day-content hidden animate-fade-in">
+                    <h3 class="text-xl font-bold text-yellow-500 mb-4 bg-yellow-50 inline-block px-3 py-1 rounded-lg">6/9 (日) 第六天：原宿上野最後衝刺 🛍️</h3>
+                    
+                    <div class="relative mb-6">
+                        <div class="timeline-dot" style="background-color: #fbbf24; border-color: #fde68a;"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">09:30 - 13:30</div>
+                        <div class="bg-yellow-50 p-4 rounded-2xl rounded-tl-none border border-yellow-100 shadow-sm">
+                            <h4 class="font-bold text-lg text-yellow-700 flex items-center gap-2">⛩️ 原宿商圈 ＆ 神宮漫步</h4>
+                            <p class="text-gray-500 mt-2">把握最後一天的精華時光，從神聖的森林一路逛到潮流指標街區！</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&origin=維拉芳泉東京有明大酒店&destination=明治神宮&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-yellow-400 text-yellow-700 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-yellow-100 transition-colors mt-3 mb-2 shadow-sm no-underline">🚇 導航：飯店 ➔ 明治神宮</a>
+                            <div class="reco-box border-yellow-300">
+                                <div class="text-yellow-700"><span class="reco-title">📍 路線精華</span> 
+                                    <ul class="list-disc ml-5 text-sm">
+                                        <li><b>明治神宮：</b> 吸收東京市中心最大的森林芬多精。</li>
+                                        <li><b>東鄉神社：</b> 買超級可愛的「HELLO KITTY 御守」！</li>
+                                        <li><b>竹下通、原宿貓街、表參道：</b> 一路把原宿的潮流品牌與精品旗艦店逛好逛滿。</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative mb-6">
+                        <div class="timeline-dot" style="background-color: #fbbf24; border-color: #fde68a;"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">14:00 - 17:00</div>
+                        <div class="bg-orange-50 p-4 rounded-2xl rounded-tl-none border border-orange-100 shadow-sm">
+                            <h4 class="font-bold text-lg text-orange-700 flex items-center gap-2">🐼 上野阿美橫町</h4>
+                            <p class="text-gray-500 mt-2">搭車前往上野，在阿美橫町進行最後的藥妝、零食、伴手禮大掃貨！</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&origin=原宿&destination=上野阿美橫町&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-orange-300 text-orange-700 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-orange-100 transition-colors mt-3 shadow-sm no-underline">🚇 導航：原宿 ➔ 上野阿美橫町</a>
+                        </div>
+                    </div>
+
+                    <div class="relative mb-6">
+                        <div class="timeline-dot" style="background-color: #fbbf24; border-color: #fde68a;"></div>
+                        <div class="text-sm font-bold text-gray-400 mb-1">17:00 - 21:15</div>
+                        <div class="bg-pink-50 p-4 rounded-2xl rounded-tl-none border border-pink-200 shadow-sm">
+                            <h4 class="font-bold text-lg text-pink-700 flex items-center gap-2">👋 啟程前往機場，滿載而歸</h4>
+                            <p class="text-gray-500 mt-2">拿好行李前往成田機場。<br><b>19:00</b> 抵達機場辦理報到與免稅採買。<br><b>21:15</b> 班機起飛，平安返家！</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&origin=上野&destination=成田機場&travelmode=transit" target="_blank" class="inline-flex items-center gap-1 bg-white border-2 border-pink-300 text-pink-700 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-pink-100 transition-colors mt-3 shadow-sm no-underline">🚇 導航：上野 ➔ 成田機場</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+    </style>
+
+    <script>
+        function showDay(dayNum) {
+            document.querySelectorAll('.day-content').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            document.getElementById('day-' + dayNum).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-pink-400', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-500');
+            });
+            
+            const activeBtn = document.getElementById('btn-day-' + dayNum);
+            activeBtn.classList.remove('bg-gray-100', 'text-gray-500');
+            activeBtn.classList.add('active', 'bg-pink-400', 'text-white');
+
+            document.querySelectorAll('.route-path').forEach(path => {
+                path.classList.remove('active');
+                path.parentNode.insertBefore(path, path.parentNode.firstChild);
+            });
+            
+            const activePath = document.getElementById('path-day-' + dayNum);
+            if (activePath) {
+                activePath.classList.add('active');
+                activePath.parentNode.appendChild(activePath);
+            }
+        }
+
+        window.onload = function() {
+            showDay(1);
+        };
+    </script>
+</body>
+</html>
