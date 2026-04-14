@@ -128,10 +128,28 @@
             gap: 0.25rem;
         }
 
+        /* 手機版專屬優化 (Mobile-First Adjustments) */
         @media (max-width: 640px) {
-            .map-container { height: 300px; }
-            .pin-emoji { font-size: 2rem; }
-            .pin-label { font-size: 0.7rem; }
+            .map-container { height: 320px; border-radius: 1.5rem; }
+            
+            /* 大幅縮小地圖圖示與文字，防止擠在一起 */
+            .pin-emoji { font-size: 1.15rem; filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.2)); }
+            .pin-label { font-size: 0.55rem; padding: 2px 4px; border-width: 1px; margin-top: -2px; border-radius: 8px; }
+            
+            /* 將標籤按鈕縮小，節省螢幕空間 */
+            .tab-btn { font-size: 0.75rem; padding: 0.4rem 0.6rem; }
+            
+            /* 將導航按鈕在手機版強制改為滿版大按鈕，方便手指點擊 */
+            a[href*="google.com/maps"] {
+                display: flex !important;
+                width: 100% !important;
+                justify-content: center !important;
+                padding-top: 0.6rem !important;
+                padding-bottom: 0.6rem !important;
+                font-size: 0.85rem !important;
+                margin-top: 0.5rem !important;
+                margin-bottom: 0.25rem !important;
+            }
         }
     </style>
 </head>
@@ -158,52 +176,52 @@
 
                 <!-- SVG Routes -->
                 <svg class="route-line" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <path id="path-day-1" d="M 85 90 Q 75 75 65 75 L 55 60 L 70 30 L 75 25" fill="none" stroke="#ec4899" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
-                    <path id="path-day-2" d="M 65 75 Q 75 70 88 65 Q 75 75 65 75" fill="none" stroke="#3b82f6" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
-                    <path id="path-day-3" d="M 65 75 L 75 25 L 45 60 L 48 55 L 65 65" fill="none" stroke="#10b981" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
-                    <path id="path-day-4" d="M 65 75 L 65 65 L 35 45 L 15 50" fill="none" stroke="#8b5cf6" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
-                    <path id="path-day-5" d="M 15 50 Q 30 50 45 55 L 65 75" fill="none" stroke="#ef4444" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
-                    <path id="path-day-6" d="M 65 75 L 45 50 L 70 30 L 85 90" fill="none" stroke="#f59e0b" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
+                    <path id="path-day-1" d="M 85 90 Q 75 80 64 78 L 54 58 L 70 32 L 78 22" fill="none" stroke="#ec4899" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
+                    <path id="path-day-2" d="M 64 78 Q 76 70 88 60 Q 76 75 64 78" fill="none" stroke="#3b82f6" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
+                    <path id="path-day-3" d="M 64 78 L 78 22 L 42 60 L 42 48 L 64 64" fill="none" stroke="#10b981" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
+                    <path id="path-day-4" d="M 64 64 L 32 42 L 12 50" fill="none" stroke="#8b5cf6" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
+                    <path id="path-day-5" d="M 12 50 Q 30 50 48 56 L 64 64" fill="none" stroke="#ef4444" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
+                    <path id="path-day-6" d="M 64 78 L 42 48 L 70 32 L 85 90" fill="none" stroke="#f59e0b" stroke-width="2" class="route-path" vector-effect="non-scaling-stroke"/>
                 </svg>
 
                 <!-- Pins -->
-                <div class="map-pin" style="left: 15%; top: 50%;">
+                <div class="map-pin" style="left: 12%; top: 50%;">
                     <div class="pin-emoji">🗻</div>
                     <div class="pin-label">富士山</div>
                 </div>
-                <div class="map-pin" style="left: 35%; top: 45%;">
+                <div class="map-pin" style="left: 32%; top: 42%;">
                     <div class="pin-emoji">🌳</div>
                     <div class="pin-label">吉卜力</div>
                 </div>
-                <div class="map-pin" style="left: 45%; top: 50%;">
+                <div class="map-pin" style="left: 42%; top: 48%;">
                     <div class="pin-emoji">🛍️</div>
                     <div class="pin-label">原宿/澀谷</div>
                 </div>
-                <div class="map-pin" style="left: 45%; top: 60%;">
+                <div class="map-pin" style="left: 42%; top: 60%;">
                     <div class="pin-emoji">☕</div>
                     <div class="pin-label">代官山/中目黑</div>
                 </div>
-                <div class="map-pin" style="left: 55%; top: 60%;">
+                <div class="map-pin" style="left: 54%; top: 58%;">
                     <div class="pin-emoji">🗼</div>
                     <div class="pin-label">東京鐵塔</div>
                 </div>
-                <div class="map-pin" style="left: 65%; top: 65%;">
+                <div class="map-pin" style="left: 64%; top: 64%;">
                     <div class="pin-emoji">🍸</div>
                     <div class="pin-label">銀座/築地</div>
                 </div>
-                <div class="map-pin" style="left: 65%; top: 75%;">
+                <div class="map-pin" style="left: 64%; top: 78%;">
                     <div class="pin-emoji">🏨</div>
                     <div class="pin-label">有明大酒店</div>
                 </div>
-                <div class="map-pin" style="left: 70%; top: 30%;">
+                <div class="map-pin" style="left: 70%; top: 32%;">
                     <div class="pin-emoji">🐼</div>
                     <div class="pin-label">上野/秋葉原</div>
                 </div>
-                <div class="map-pin" style="left: 75%; top: 25%;">
+                <div class="map-pin" style="left: 78%; top: 22%;">
                     <div class="pin-emoji">🏮</div>
                     <div class="pin-label">淺草/晴空塔</div>
                 </div>
-                <div class="map-pin" style="left: 88%; top: 65%;">
+                <div class="map-pin" style="left: 88%; top: 60%;">
                     <div class="pin-emoji">🏰</div>
                     <div class="pin-label">迪士尼</div>
                 </div>
